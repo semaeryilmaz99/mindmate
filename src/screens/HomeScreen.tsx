@@ -15,6 +15,7 @@ import { useTasks } from '../hooks/useTasks';
 import { Task } from '../types';
 import { COLORS } from '../utils/constants';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../services/AuthContext';
 
 // Define the navigation stack param list
 type RootStackParamList = {
@@ -26,6 +27,7 @@ type RootStackParamList = {
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { tasks, loading, toggleTaskCompletion, deleteTask } = useTasks();
+  const { signOut } = useAuth();
   const [showCompleted, setShowCompleted] = useState(false);
   const [sortMode, setSortMode] = useState<'date' | 'priority'>('date');
 
@@ -61,9 +63,14 @@ export const HomeScreen: React.FC = () => {
     <View style={styles.header}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={styles.title}>MindMate</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Calendar')} style={styles.calendarButton}>
-          <Ionicons name="calendar" size={28} color={COLORS.primary} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => navigation.navigate('Calendar')} style={styles.calendarButton}>
+            <Ionicons name="calendar" size={28} color={COLORS.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={signOut} style={styles.logoutButton}>
+            <Ionicons name="log-out-outline" size={28} color={COLORS.error} />
+          </TouchableOpacity>
+        </View>
       </View>
       <Text style={styles.subtitle}>
         {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
@@ -228,6 +235,9 @@ const styles = StyleSheet.create({
     color: COLORS.surface,
   },
   calendarButton: {
+    padding: 8,
+  },
+  logoutButton: {
     padding: 8,
   },
 }); 
