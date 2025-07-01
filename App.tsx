@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { CreateTaskScreen } from './src/screens/CreateTaskScreen';
 import { supabase } from './src/services/supabase';
+import { CalendarScreen } from './src/screens/CalendarScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -26,6 +27,7 @@ export default function App() {
       <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
+        <Stack.Screen name="Calendar" component={CalendarScreen} />
       </Stack.Navigator>
       <StatusBar style="auto" />
     </NavigationContainer>

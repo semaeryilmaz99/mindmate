@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { Task } from '../types';
 import { supabase } from '../services/supabase';
 
+function generateTempId() {
+  return 'temp-' + Math.random().toString(36).substr(2, 9);
+}
+
 export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +37,17 @@ export const useTasks = () => {
 
   const addTask = useCallback(async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date();
+    // Optimistically add the task to local state
+    const tempId = generateTempId();
+    const optimisticTask: Task = {
+      ...taskData,
+      id: tempId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    setTasks((prev) => [optimisticTask, ...prev]);
+
+    // Add to Supabase
     const { data, error } = await supabase.from('tasks').insert([
       {
         ...taskData,
@@ -42,6 +57,8 @@ export const useTasks = () => {
     ]).select();
     if (error) {
       console.error('Error adding task to Supabase:', error.message);
+      // Optionally remove the optimistic task if error
+      setTasks((prev) => prev.filter((task) => task.id !== tempId));
       return;
     }
     if (data && data.length > 0) {
@@ -51,7 +68,11 @@ export const useTasks = () => {
         updatedAt: new Date(data[0].updatedAt),
         dueDate: data[0].dueDate ? new Date(data[0].dueDate) : undefined,
       };
-      setTasks((prev) => [newTask, ...prev]);
+      // Replace the optimistic task with the real one
+      setTasks((prev) => [newTask, ...prev.filter((task) => task.id !== tempId)]);
+    } else {
+      // If no data returned, re-fetch tasks to ensure consistency
+      loadTasks();
     }
   }, []);
 

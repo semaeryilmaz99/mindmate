@@ -14,21 +14,34 @@ import { TaskItem } from '../components/TaskItem';
 import { useTasks } from '../hooks/useTasks';
 import { Task } from '../types';
 import { COLORS } from '../utils/constants';
+import { Ionicons } from '@expo/vector-icons';
 
 // Define the navigation stack param list
 type RootStackParamList = {
   Home: undefined;
   CreateTask: undefined;
+  Calendar: undefined;
 };
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { tasks, loading, toggleTaskCompletion, deleteTask } = useTasks();
   const [showCompleted, setShowCompleted] = useState(false);
+  const [sortMode, setSortMode] = useState<'date' | 'priority'>('date');
 
-  const filteredTasks = showCompleted 
-    ? tasks 
-    : tasks.filter(task => !task.completed);
+  // Sorting logic
+  const sortTasks = (tasks: Task[]) => {
+    if (sortMode === 'priority') {
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
+      return [...tasks].sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
+    } else {
+      return [...tasks].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    }
+  };
+
+  const filteredTasks = sortTasks(
+    showCompleted ? tasks : tasks.filter(task => !task.completed)
+  );
 
   const handleTaskPress = (task: Task) => {
     // TODO: Navigate to task detail/edit screen
@@ -46,19 +59,33 @@ export const HomeScreen: React.FC = () => {
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <Text style={styles.title}>MindMate</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={styles.title}>MindMate</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Calendar')} style={styles.calendarButton}>
+          <Ionicons name="calendar" size={28} color={COLORS.primary} />
+        </TouchableOpacity>
+      </View>
       <Text style={styles.subtitle}>
         {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
       </Text>
-      
-      <TouchableOpacity
-        style={styles.toggleButton}
-        onPress={() => setShowCompleted(!showCompleted)}
-      >
-        <Text style={styles.toggleText}>
-          {showCompleted ? 'Hide Completed' : 'Show Completed'}
-        </Text>
-      </TouchableOpacity>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <TouchableOpacity
+          style={styles.toggleButton}
+          onPress={() => setShowCompleted(!showCompleted)}
+        >
+          <Text style={styles.toggleText}>
+            {showCompleted ? 'Hide Completed' : 'Show Completed'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.sortButton}
+          onPress={() => setSortMode(sortMode === 'date' ? 'priority' : 'date')}
+        >
+          <Text style={styles.sortButtonText}>
+            {sortMode === 'priority' ? 'Sort by Date' : 'Sort by Priority'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -150,6 +177,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  sortButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: COLORS.primary,
+    borderRadius: 20,
+  },
+  sortButtonText: {
+    color: COLORS.surface,
+    fontSize: 14,
+    fontWeight: '600',
+  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -187,5 +226,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: COLORS.surface,
+  },
+  calendarButton: {
+    padding: 8,
   },
 }); 

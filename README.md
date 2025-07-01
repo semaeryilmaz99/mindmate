@@ -91,7 +91,6 @@ The app follows a clean architecture pattern with:
 - **TaskItem**: Displays individual tasks with completion toggle
 - **HomeScreen**: Main screen showing task list and controls
 - **useTasks**: Custom hook for task state management
-- **StorageService**: Handles local data persistence
 
 ## 📋 TODO
 
