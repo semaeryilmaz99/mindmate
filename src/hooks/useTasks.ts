@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Task } from '../types';
-import { StorageService } from '../services/storage';
-import { generateId } from '../utils/helpers';
+import { supabase } from '../services/supabase';
 
 export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -15,43 +14,76 @@ export const useTasks = () => {
   const loadTasks = async () => {
     try {
       setLoading(true);
-      const loadedTasks = await StorageService.getTasks();
-      setTasks(loadedTasks);
+      const { data, error } = await supabase.from('tasks').select('*').order('createdAt', { ascending: false });
+      if (error) throw error;
+      // Convert string dates to Date objects
+      const parsedTasks = (data || []).map((task: any) => ({
+        ...task,
+        createdAt: task.createdAt ? new Date(task.createdAt) : new Date(),
+        updatedAt: task.updatedAt ? new Date(task.updatedAt) : new Date(),
+        dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+      }));
+      setTasks(parsedTasks);
     } catch (error) {
-      console.error('Error loading tasks:', error);
+      console.error('Error loading tasks from Supabase:', error.message || error);
     } finally {
       setLoading(false);
     }
   };
 
   const addTask = useCallback(async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newTask: Task = {
-      ...taskData,
-      id: generateId(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    const updatedTasks = [...tasks, newTask];
-    setTasks(updatedTasks);
-    await StorageService.saveTasks(updatedTasks);
-  }, [tasks]);
+    const now = new Date();
+    const { data, error } = await supabase.from('tasks').insert([
+      {
+        ...taskData,
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      },
+    ]).select();
+    if (error) {
+      console.error('Error adding task to Supabase:', error.message);
+      return;
+    }
+    if (data && data.length > 0) {
+      const newTask = {
+        ...data[0],
+        createdAt: new Date(data[0].createdAt),
+        updatedAt: new Date(data[0].updatedAt),
+        dueDate: data[0].dueDate ? new Date(data[0].dueDate) : undefined,
+      };
+      setTasks((prev) => [newTask, ...prev]);
+    }
+  }, []);
 
   const updateTask = useCallback(async (id: string, updates: Partial<Task>) => {
-    const updatedTasks = tasks.map(task =>
-      task.id === id
-        ? { ...task, ...updates, updatedAt: new Date() }
-        : task
-    );
-    setTasks(updatedTasks);
-    await StorageService.saveTasks(updatedTasks);
-  }, [tasks]);
+    const now = new Date();
+    const { data, error } = await supabase.from('tasks').update({
+      ...updates,
+      updatedAt: now.toISOString(),
+    }).eq('id', id).select();
+    if (error) {
+      console.error('Error updating task in Supabase:', error.message);
+      return;
+    }
+    if (data && data.length > 0) {
+      const updatedTask = {
+        ...data[0],
+        createdAt: new Date(data[0].createdAt),
+        updatedAt: new Date(data[0].updatedAt),
+        dueDate: data[0].dueDate ? new Date(data[0].dueDate) : undefined,
+      };
+      setTasks((prev) => prev.map((task) => (task.id === id ? updatedTask : task)));
+    }
+  }, []);
 
   const deleteTask = useCallback(async (id: string) => {
-    const updatedTasks = tasks.filter(task => task.id !== id);
-    setTasks(updatedTasks);
-    await StorageService.saveTasks(updatedTasks);
-  }, [tasks]);
+    const { error } = await supabase.from('tasks').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting task from Supabase:', error.message);
+      return;
+    }
+    setTasks((prev) => prev.filter((task) => task.id !== id));
+  }, []);
 
   const toggleTaskCompletion = useCallback(async (id: string) => {
     const task = tasks.find(t => t.id === id);
@@ -61,9 +93,14 @@ export const useTasks = () => {
   }, [tasks, updateTask]);
 
   const clearCompletedTasks = useCallback(async () => {
-    const updatedTasks = tasks.filter(task => !task.completed);
-    setTasks(updatedTasks);
-    await StorageService.saveTasks(updatedTasks);
+    const completedIds = tasks.filter(task => task.completed).map(task => task.id);
+    if (completedIds.length === 0) return;
+    const { error } = await supabase.from('tasks').delete().in('id', completedIds);
+    if (error) {
+      console.error('Error clearing completed tasks from Supabase:', error.message);
+      return;
+    }
+    setTasks((prev) => prev.filter((task) => !task.completed));
   }, [tasks]);
 
   return {
