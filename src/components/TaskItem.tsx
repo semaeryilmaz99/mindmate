@@ -8,9 +8,10 @@ interface TaskItemProps {
   task: Task;
   onToggle: (id: string) => void;
   onPress: (task: Task) => void;
+  onDelete: (id: string) => void;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onPress }) => {
+export const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onPress, onDelete }) => {
   const priorityColor = PRIORITY_COLORS[task.priority];
   const isTaskOverdue = isOverdue(task);
 
@@ -53,6 +54,9 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onPress }) =
           )}
         </View>
       </View>
+      <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(task.id)}>
+        <Text style={styles.deleteButtonText}>🗑️</Text>
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 };
@@ -137,5 +141,14 @@ const styles = StyleSheet.create({
   overdue: {
     color: COLORS.error,
     fontWeight: '600',
+  },
+  deleteButton: {
+    marginLeft: 12,
+    alignSelf: 'center',
+    padding: 4,
+  },
+  deleteButtonText: {
+    fontSize: 18,
+    color: COLORS.error,
   },
 }); 

@@ -23,7 +23,7 @@ type RootStackParamList = {
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { tasks, loading, toggleTaskCompletion } = useTasks();
+  const { tasks, loading, toggleTaskCompletion, deleteTask } = useTasks();
   const [showCompleted, setShowCompleted] = useState(false);
 
   const filteredTasks = showCompleted 
@@ -40,6 +40,7 @@ export const HomeScreen: React.FC = () => {
       task={item}
       onToggle={toggleTaskCompletion}
       onPress={handleTaskPress}
+      onDelete={deleteTask}
     />
   );
 
