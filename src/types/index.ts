@@ -43,4 +43,12 @@ export interface TaskStats {
     high: number;
   };
   byCategory: Record<string, number>;
+}
+
+export interface Subtask {
+  id: string;
+  task_id: string;
+  title: string;
+  completed: boolean;
+  created_at: Date;
 } 
