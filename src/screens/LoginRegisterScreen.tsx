@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator 
 import { useAuth } from '../services/AuthContext';
 import { COLORS } from '../utils/constants';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const MAIN_RED = '#E44332';
 
@@ -13,6 +14,7 @@ export const LoginRegisterScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
+  const navigation = useNavigation();
 
   const handleAuth = async () => {
     setError(null);
@@ -101,7 +103,7 @@ export const LoginRegisterScreen: React.FC = () => {
           <Text style={styles.mainButtonText}>{isLogin ? 'Log In' : 'Register'}</Text>
         )}
       </TouchableOpacity>
-      <TouchableOpacity style={styles.forgotButton}>
+      <TouchableOpacity style={styles.forgotButton} onPress={() => navigation.navigate('ResetPassword')}>
         <Text style={styles.forgotText}>Forgot your password?</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => { setIsLogin(!isLogin); setError(null); setConfirmationMessage(null); }}>

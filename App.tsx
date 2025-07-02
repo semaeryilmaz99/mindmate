@@ -12,6 +12,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { LongTermPlansScreen } from './src/screens/LongTermPlansScreen';
 import { ProgressScreen } from './src/screens/ProgressScreen';
 import { Ionicons } from '@expo/vector-icons';
+import { ResetPasswordScreen } from './src/screens/ResetPasswordScreen';
+import { ActivityIndicator, View } from 'react-native';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -42,12 +44,21 @@ function MainTabs() {
   );
 }
 
-function MainApp() {
+function MainApp({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="MainTabs" component={MainTabs} />
-        <Stack.Screen name="CreateTask" component={CreateTaskScreen} options={{ presentation: 'modal' }} />
+        {!isLoggedIn ? (
+          <>
+            <Stack.Screen name="LoginRegister" component={LoginRegisterScreen} />
+            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen name="CreateTask" component={CreateTaskScreen} options={{ presentation: 'modal' }} />
+          </>
+        )}
       </Stack.Navigator>
       <StatusBar style="auto" />
     </NavigationContainer>
@@ -56,8 +67,12 @@ function MainApp() {
 
 function Root() {
   const { user, loading } = useAuth();
-  if (loading) return null;
-  return user ? <MainApp /> : <LoginRegisterScreen />;
+  if (loading) return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+      <ActivityIndicator size="large" color="#3498db" />
+    </View>
+  );
+  return <MainApp isLoggedIn={!!user} />;
 }
 
 export default function App() {
