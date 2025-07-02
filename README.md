@@ -1,6 +1,6 @@
 # MindMate - Smart To-Do List App
 
-A modern, intuitive to-do list application built with React Native and Expo.
+A modern, intuitive to-do list application built with Supabase, React Native and Expo.
 
 ## 🚀 Features
 
